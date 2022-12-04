@@ -1,0 +1,127 @@
+#####################################################################################
+A. DEVELOP
+#####################################################################################
+https://www.youtube.com/watch?v=BnknNTN8icw
+1. USER-SERVICE: Spring boot Department with controller
+2. Spring boot User with controller
+3. DEPARTMENT-SERVICE: User to call Department microservice/api and provide user with department VOV
+4. Test with Postman user VOV, department 
+5. REGISTRY: Spring boot Eurake boot to register both user and department
+6. API-GATEWAY: Spring boot api gateway so that there is only one entry for api.
+6. HYSTRIC-DASHBOARD: Spring boot hiraka as falback when any service is down.
+7. Add histric dashboard
+8. CONFIG-SERVICE: Spring boot config server with external git hub to save common config details
+9. Zipkin server, single log for distriubted service
+	add zipikin clint in USER and department
+	traceid, sapnid
+
+
+start order:	
+	1. registery
+	2. config server
+	3. api gateway
+	4. department service
+	5. user service
+	6. histric dashboard
+	
+Comments:
+	1. use feign client instead of RestTemplate
+			As per Spring Resttemplate is going to deprecated
+	2. Spring security as microservice
+	3. Microservice with Java and Python	
+		Intercommunicate between different language microservice
+	4. Multiple instance of one service
+	5. Encrpyting external property file
+	6. Instead of different Spring boot application open as module, so dont have to open different windows
+		global config can be in main pom.xml and independent on indiviaul pom.xml
+	7. ZUUL for api gateway and ZUUL API Authentication
+	8. Dockerize app and deploy to cloud
+	9. Kafka
+	10. Open API/Swagger
+	
+
+#####################################################################################
+B. DEPLOY TO KUBERNETES CLUSTER
+#####################################################################################
+	
+https://www.youtube.com/watch?v=VAmntTPebKE
+Deploy to kubernetes
+1. Add docker maven plugin 
+2. Add docker auth info in setting.xml file
+3. Add Dockerfile
+4. mvn clean package dockerfile:push
+	this will push the image to docker hub
+5. Do this in user, service registry, department, histric dashboard, config-server
+6. Add service registry with instance, hostname and service, which will be used by all
+7. Add service registry service url in client for all
+	http://eureka-0.eureka.default.svc.cluster.local:8761/eureka
+8. mvn push all the component to create docker
+9 check docker images by comman
+	docket images
+10. create kuberneis config file and create application in kubernetes
+	minikube status
+	
+		kind: Deployement
+		kind: Service
+11. Create similar for all except service-registry as it will have statefull
+		Deployement:
+			user-service.yml	service:ClusterIP
+			department-service.yml	service:ClusterIP
+			config-server.yml	service:ClusterIP
+			cloud-gateway.yml	service type:LoadBalancer(As this is external service)
+			hystric-dashboard.yml	ServiceType: nodeport
+
+		
+		service-registry 	4 component
+			Statefile set instead of deployement
+				Headless is required for stateless(Service with ip, will create internal endpoint for communication)
+			Service to connect
+			Config map, to get the hostname
+			Secret, to hold auth and database variables
+			
+				kind: ConfigMap
+				kind: Service 
+						ClusterIp: None--> headless service
+				kind: StateFulSet
+				kind: service
+					type: Nodeport
+				
+			
+12. Create application in Kubernets
+			kubectl get all
+			kubectl get nodes
+			kubectl cluster-info
+			minikube service list
+			cd .\k8s\
+			kubectl apply -f ./
+			kubectl get all
+			kubectl describe <name>
+			
+			kubectl get pods
+			kubectl get svc
+			kubectl get deployments
+			kubectl get all
+			
+13. kubectl port-forward, only to be done on dev, on prod all should go via api gateway
+14. test via postman
+15. scale up user service
+	kubectlscal --replicas=3 -f .\user-service.yml
+		it has 2 copomnent inside deployement and service
+		scale for deployemnet will work but fail for service
+16. Kubernetes dasboard
+		minikube dashboard
+		
+17. delete kubernetes
+		kubectl delete -f ./
+		kubectl get all
+		
+		
+			
+			
+		
+Comments:
+	1. Automate whole process with Jenkins ci-cd pipeline for creation of docker etc
+	2. Spring cloud Oauth2
+	3. Instead of deployinh locally use CI/CD deploy to EKS(Amazon) or AKS or GKE
+	4. Hystric dependency is no more maintained by spring
+		use resiliance4j circuitbreaker
